@@ -26,10 +26,14 @@ export default function FeedPage() {
         setLoading(true);
         setErr(null);
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts`, {
-          headers: t ? { Authorization: Bearer ${t} } : {},
-          cache: "no-store",
-        });
+const base = process.env.NEXT_PUBLIC_API_URL;
+
+if (!base) throw new Error("NEXT_PUBLIC_API_URL is not set");
+
+const res = await fetch(`${base}/posts`, {
+  headers: t ? { Authorization: Bearer ${t} } : {},
+  cache: "no-store",
+});
 
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);

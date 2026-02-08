@@ -6,9 +6,40 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    dependencies:
+      next:
+        specifier: ^14.2.0
+        version: 14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.10
+      '@types/react':
+        specifier: ^18.2.0
+        version: 18.3.28
+      '@types/react-dom':
+        specifier: ^18.2.0
+        version: 18.3.7(@types/react@18.3.28)
+      eslint:
+        specifier: ^9.0.0
+        version: 9.39.2(jiti@2.6.1)
+      eslint-config-next:
+        specifier: ^14.2.0
+        version: 14.2.35(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
 
-  apps/api:
+  ../..: {}
+
+  ../api:
     dependencies:
       '@nestjs/common':
         specifier: ^11.0.1
@@ -131,37 +162,6 @@ importers:
       typescript-eslint:
         specifier: ^8.20.0
         version: 8.54.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
-
-  apps/web:
-    dependencies:
-      next:
-        specifier: ^14.2.0
-        version: 14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.10
-      '@types/react':
-        specifier: ^18.2.0
-        version: 18.3.28
-      '@types/react-dom':
-        specifier: ^18.2.0
-        version: 18.3.7(@types/react@18.3.28)
-      eslint:
-        specifier: ^9.0.0
-        version: 9.39.2(jiti@2.6.1)
-      eslint-config-next:
-        specifier: ^14.2.0
-        version: 14.2.35(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
 
 packages:
 

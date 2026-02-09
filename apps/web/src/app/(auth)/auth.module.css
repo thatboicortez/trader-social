@@ -1,0 +1,196 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  color: #fff;
+  background: #000;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.02);
+  filter: saturate(1.05) contrast(1.05);
+}
+
+.bgOverlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(1000px 600px at 30% 40%, rgba(0,0,0,0.35), rgba(0,0,0,0.75));
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: center;
+  gap: 48px;
+  padding: 48px 64px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bigLogo {
+  width: min(520px, 42vw);
+  height: min(520px, 42vw);
+  display: grid;
+  place-items: center;
+  opacity: 0.92;
+}
+
+.bigX {
+  font-size: clamp(120px, 20vw, 320px);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  user-select: none;
+}
+
+.right {
+  max-width: 520px;
+}
+
+.h1 {
+  font-size: clamp(40px, 4.2vw, 64px);
+  line-height: 1.05;
+  margin: 0 0 14px 0;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.h2 {
+  font-size: 28px;
+  margin: 0 0 20px 0;
+  font-weight: 800;
+}
+
+.actions {
+  display: grid;
+  gap: 12px;
+  width: 360px;
+  max-width: 100%;
+}
+
+.socialBtn,
+.primaryBtn,
+.outlineBtn {
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.92);
+  color: #0f1419;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform .08s ease, background .12s ease, border-color .12s ease;
+}
+
+.socialBtn:hover {
+  background: rgba(255,255,255,0.98);
+}
+
+.socialIcon {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.08);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.primaryBtn {
+  background: #ffffff;
+  border-color: rgba(255,255,255,0.22);
+}
+
+.primaryBtn:hover {
+  background: rgba(255,255,255,0.95);
+}
+
+.outlineBtn {
+  background: transparent;
+  color: #fff;
+  border-color: rgba(255,255,255,0.35);
+}
+
+.outlineBtn:hover {
+  border-color: rgba(255,255,255,0.55);
+}
+
+.socialBtn:active,
+.primaryBtn:active,
+.outlineBtn:active {
+  transform: translateY(1px);
+}
+
+.orRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.orLine {
+  height: 1px;
+  background: rgba(255,255,255,0.22);
+}
+
+.orText {
+  font-size: 12px;
+  opacity: 0.85;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.disclaimer {
+  margin: 4px 0 10px 0;
+  font-size: 12px;
+  opacity: 0.78;
+  line-height: 1.4;
+}
+
+.signinBox {
+  margin-top: 8px;
+  display: grid;
+  gap: 10px;
+}
+
+.signinText {
+  margin: 0;
+  font-weight: 700;
+  opacity: 0.92;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+    padding: 28px 18px;
+    gap: 28px;
+  }
+  .left {
+    justify-content: flex-start;
+  }
+  .bigLogo {
+    width: 160px;
+    height: 160px;
+    justify-self: start;
+  }
+  .actions {
+    width: 100%;
+  }
+}

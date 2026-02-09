@@ -55,8 +55,8 @@ export default function AuthPage() {
 
         {/* Right CTA area */}
         <section className={styles.right}>
-          <h1 className={styles.h1}>Happening now</h1>
-          <h2 className={styles.h2}>Join today.</h2>
+          <h1 className={styles.h1}>Proof matters</h1>
+          <h2 className={styles.h2}>Join and publish.</h2>
 
           <div className={styles.actions}>
             <button className={styles.socialBtn} type="button">

@@ -31,9 +31,7 @@ export default function FeedPage() {
         }
 
         const res = await fetch(`${base}/posts`, {
-          headers: token
-            ? { Authorization: Bearer ${token} }
-            : undefined,
+          headers: token ? { Authorization: Bearer ${token} } : undefined,
           cache: 'no-store',
         });
 
@@ -44,7 +42,7 @@ export default function FeedPage() {
         const data = await res.json();
         setPosts(Array.isArray(data) ? data : []);
       } catch (err: any) {
-        setError(err.message ?? 'Unknown error');
+        setError(err?.message ?? 'Unknown error');
       } finally {
         setLoading(false);
       }
@@ -53,13 +51,8 @@ export default function FeedPage() {
     loadPosts();
   }, []);
 
-  if (loading) {
-    return <p>Loading feed…</p>;
-  }
-
-  if (error) {
-    return <p style={{ color: 'red' }}>Error: {error}</p>;
-  }
+  if (loading) return <p>Loading feed…</p>;
+  if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
 
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
@@ -68,30 +61,10 @@ export default function FeedPage() {
       {posts.length === 0 ? (
         <p>No posts yet.</p>
       ) : (
-        <ul
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-            padding: 0,
-            listStyle: 'none',
-          }}
-        >
+        <ul style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 0, listStyle: 'none' }}>
           {posts.map((p) => (
-            <li
-              key={p.id}
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: 8,
-                padding: 12,
-              }}
-            >
-              <div
-                style={{
-                  fontWeight: 700,
-                  marginBottom: 6,
-                }}
-              >
+            <li key={p.id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12 }}>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>
                 {p.author?.username ?? 'Unknown'}
               </div>
               <div>{p.content}</div>

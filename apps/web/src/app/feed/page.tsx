@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 type Post = {
-  id?: string;
-  content?: string;
-  text?: string;
+  id: string;
+  title?: string | null;
+  content?: string | null;
   createdAt?: string;
-  author?: { name?: string; email?: string };
+  authorId?: string | null;
 };
 
 export default function FeedPage() {
@@ -16,81 +16,133 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
+  const base = process.env.NEXT_PUBLIC_API_URL;
+
   useEffect(() => {
-    // ✅ localStorage только на клиенте
-    const t = window.localStorage.getItem("token");
-    setToken(t);
+    if (typeof window === 'undefined') return;
+    try {
+      setToken(window.localStorage.getItem('token'));
+    } catch {
+      setToken(null);
+    }
+  }, []);
 
+  useEffect(() => {
     const run = async () => {
+      if (!base) {
+        setErr('NEXT_PUBLIC_API_URL is not set');
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setErr(null);
+
       try {
-        setLoading(true);
-        setErr(null);
-
-const base = process.env.NEXT_PUBLIC_API_URL;
-
-if (!base) throw new Error("NEXT_PUBLIC_API_URL is not set");
-
-const res = await fetch(`${base}/posts`, {
-  headers: t ? { Authorization: Bearer ${t} } : {},
-  cache: "no-store",
-});
+        const res = await fetch(`${base}/posts`, {
+          headers: token ? { Authorization: Bearer ${token} } : {},
+          cache: 'no-store',
+        });
 
         if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
+          const text = await res.text().catch(() => '');
+          throw new Error(`HTTP ${res.status} ${res.statusText}${text ? : ${text} : ''}`);
         }
 
-        const data = await res.json();
-        setPosts(Array.isArray(data) ? data : data?.items ?? []);
+        const data = (await res.json().catch(() => null)) as any;
+
+        // поддержим разные форматы ответа
+        const items: Post[] = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.items)
+            ? data.items
+            : Array.isArray(data?.data)
+              ? data.data
+              : [];
+
+        setPosts(items);
       } catch (e: any) {
-        setErr(e?.message || "Failed to load");
+        setErr(e?.message ?? 'Failed to load feed');
       } finally {
         setLoading(false);
       }
     };
 
+    // не делаем запрос до того, как определили token (иначе SSR/CSR гонки)
     run();
-  }, []);
+  }, [base, token]);
 
   return (
-    <main style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
-      <h1 style={{ margin: 0, fontSize: 28 }}>Feed</h1>
+    <main style={{ maxWidth: 840, margin: '0 auto', padding: '32px 16px' }}>
+      <header style={{ marginBottom: 18, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700 }}>Feed</h1>
+        <span style={{ opacity: 0.7, fontSize: 14 }}>
+          {token ? 'authorized' : 'no token (public)'}
+        </span>
+      </header>
 
-      {!token && (
-        <div style={{ marginTop: 12, opacity: 0.8 }}>
-          No token found. Please login first.
+      {loading && <p style={{ opacity: 0.75 }}>Loading…</p>}
+
+      {!loading && err && (
+        <div
+          style={{
+            border: '1px solid rgba(255,0,0,0.35)',
+            background: 'rgba(255,0,0,0.06)',
+            padding: 12,
+            borderRadius: 10,
+            marginBottom: 16,
+          }}
+        >
+          <b style={{ display: 'block', marginBottom: 6 }}>Error</b>
+          <div style={{ whiteSpace: 'pre-wrap' }}>{err}</div>
+          <div style={{ marginTop: 10, fontSize: 13, opacity: 0.8 }}>
+            Check env var <code>NEXT_PUBLIC_API_URL</code> in Koyeb and that your API has a{' '}
+            <code>GET /posts</code> endpoint.
+          </div>
         </div>
       )}
 
-      {loading && <div style={{ marginTop: 12 }}>Loading...</div>}
-      {err && (
-        <div style={{ marginTop: 12, color: "crimson" }}>Error: {err}</div>
-      )}
+      {!loading && !err && posts.length === 0 && <p style={{ opacity: 0.75 }}>No posts yet.</p>}
 
-      <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
-        {posts.map((p, idx) => (
+      <section style={{ display: 'grid', gap: 12 }}>
+        {posts.map((p) => (
           <article
-            key={p.id ?? idx}
+            key={p.id}
             style={{
-              border: "1px solid #ddd",
+              border: '1px solid rgba(255,255,255,0.12)',
               borderRadius: 12,
               padding: 14,
             }}
           >
-            <div style={{ opacity: 0.7, fontSize: 12 }}>
-              {(p.author?.name  p.author?.email  "unknown") + " · "}
-              {p.createdAt ? new Date(p.createdAt).toLocaleString() : ""}
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 650 }}>
+                {p.title ?? `Post ${p.id.slice(0, 8)}`}
+              </h3>
+              {p.createdAt && (
+                <time style={{ fontSize: 12, opacity: 0.7 }}>
+                  {new Date(p.createdAt).toLocaleString()}
+                </time>
+              )}
             </div>
 
-            <div style={{ marginTop: 8, fontSize: 16 }}>
-              {p.content  p.text  JSON.stringify(p)}
+            {p.content && (
+              <p style={{ margin: '8px 0 0', whiteSpace: 'pre-wrap', lineHeight: 1.45 }}>
+                {p.content}
+              </p>
+            )}
+
+            <div style={{ marginTop: 10, fontSize: 12, opacity: 0.7 }}>
+              id: <code>{p.id}</code>
+              {p.authorId ? (
+                <>
+                  {' '}
+                  • author: <code>{p.authorId}</code>
+                </>
+              ) : null}
             </div>
           </article>
         ))}
-
-        {!loading && !err && posts.length === 0 && (
-          <div style={{ opacity: 0.7 }}>No posts yet.</div>
-        )}
-      </div>
+      </section>
     </main>
   );
 }

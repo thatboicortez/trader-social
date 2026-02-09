@@ -18,52 +18,55 @@ export default function FeedPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadPosts = async () => {
+    const load = async () => {
       try {
+        setError(null);
+
         const base = process.env.NEXT_PUBLIC_API_URL;
-        if (!base) {
-          throw new Error('NEXT_PUBLIC_API_URL is not set');
-        }
+        if (!base) throw new Error('NEXT_PUBLIC_API_URL is not set');
 
-        let token: string | null = null;
-        if (typeof window !== 'undefined') {
-          token = localStorage.getItem('token');
-        }
+        const token =
+          typeof window !== 'undefined' ? window.localStorage.getItem('token') : null;
 
-        const res = await fetch(`${base}/posts`, {
-          headers: token ? { Authorization: Bearer ${token} } : undefined,
+        const url = base.replace(/\/+$/, '') + '/posts';
+
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+
+        const res = await fetch(url, {
+          headers: Object.keys(headers).length ? headers : undefined,
           cache: 'no-store',
         });
 
         if (!res.ok) {
-          throw new Error(`Failed to fetch posts (${res.status})`);
+          throw new Error('Failed to fetch posts (' + res.status + ')');
         }
 
         const data = await res.json();
         setPosts(Array.isArray(data) ? data : []);
-      } catch (err: any) {
-        setError(err?.message ?? 'Unknown error');
+      } catch (e: any) {
+        setError(e?.message ?? 'Unknown error');
       } finally {
         setLoading(false);
       }
     };
 
-    loadPosts();
+    load();
   }, []);
 
   if (loading) return <p>Loading feed…</p>;
   if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto' }}>
-      <h1>Feed</h1>
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: 16 }}>
+      <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 12 }}>Feed</h1>
 
       {posts.length === 0 ? (
         <p>No posts yet.</p>
       ) : (
         <ul style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 0, listStyle: 'none' }}>
           {posts.map((p) => (
-            <li key={p.id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12 }}>
+            <li key={p.id} style={{ border: '1px solid #ddd', borderRadius: 10, padding: 12 }}>
               <div style={{ fontWeight: 700, marginBottom: 6 }}>
                 {p.author?.username ?? 'Unknown'}
               </div>

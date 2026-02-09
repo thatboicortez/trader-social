@@ -9,7 +9,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -17,18 +17,22 @@ export default function RegisterPage() {
     e.preventDefault();
     setErr(null);
     setLoading(true);
+
     try {
-      const res = await api<{ access_token?: string; token?: string }>("/auth/register", {
-        method: "POST",
-        json: { email, password, name },
-      });
+      const res = await api<{ access_token?: string; token?: string }>(
+        "/auth/register",
+        {
+          method: "POST",
+          json: { email, password, username },
+        }
+      );
 
       const token = res.access_token || res.token;
       if (token) setToken(token);
 
       router.push("/feed");
     } catch (e: any) {
-      setErr(e.message || "Register failed");
+      setErr(e?.message || "Register failed");
     } finally {
       setLoading(false);
     }
@@ -40,12 +44,12 @@ export default function RegisterPage() {
 
       <form onSubmit={onSubmit} style={{ display: "grid", gap: 10 }}>
         <label>
-          Name
+          Username
           <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             style={{ width: "100%", padding: 8 }}
-            placeholder="Your name"
+            placeholder="Your username"
           />
         </label>
 

@@ -1,18 +1,24 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const config = app.get(ConfigService);
-
   const port = Number(process.env.PORT ?? 3001);
-  const origin = config.get<string>('CORS_ORIGIN') ?? 'http://localhost:3000';
+
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://app.perfectshildersdecoratie.com',
+  ];
 
   app.enableCors({
-    origin,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // Postman/curl
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
   });
 

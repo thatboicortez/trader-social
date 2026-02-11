@@ -1,8 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 import { useState } from "react";
 import styles from "./auth.module.css";
 import { CreateAccountModal } from "./components/CreateAccountModal";

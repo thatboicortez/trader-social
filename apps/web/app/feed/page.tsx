@@ -1,15 +1,19 @@
-import { FeedTabs } from '@/components/FeedTabs';
-import { PostCard } from '@/components/PostCard';
-import type { Post } from '@/types/post';
+import { FeedTabs } from "@/components/FeedTabs";
+import { PostCard } from "@/components/PostCard";
+import type { Post } from "@/types/post";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL; // ок для SSR тоже, если задана в Koyeb
 
 async function getFeed(): Promise<Post[]> {
-  const res = await fetch('http://localhost:3001/posts', {
-    // если /posts защищён — сюда надо будет добавить токен через cookies/route handler
-    cache: 'no-store',
+  if (!API_URL) throw new Error("NEXT_PUBLIC_API_URL is not set");
+
+  const res = await fetch(`${API_URL}/posts`, {
+    cache: "no-store",
   });
 
   if (!res.ok) {
-    throw new Error(`Feed request failed: ${res.status}`);
+    const text = await res.text().catch(() => "");
+    throw new Error(`Feed request failed: ${res.status} ${text}`);
   }
 
   return res.json();
@@ -19,15 +23,15 @@ export default async function FeedPage() {
   const posts = await getFeed();
 
   return (
-   <main className="feedPage">
-  <div className="feedContainer">
-    <FeedTabs />
-    <div className="feedList">
-      {posts.map((p) => (
-        <PostCard key={p.id} post={p} />
-      ))}
-    </div>
-  </div>
-</main>
+    <main className="feedPage">
+      <div className="feedContainer">
+        <FeedTabs />
+        <div className="feedList">
+          {posts.map((p) => (
+            <PostCard key={p.id} post={p} />
+          ))}
+        </div>
+      </div>
+    </main>
   );
 }

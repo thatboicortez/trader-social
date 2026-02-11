@@ -1,11 +1,9 @@
-import { getToken } from './auth';
+import { getToken } from "./auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 if (!API_URL) {
-  // чтобы не молчать если env не задан
-  // (в рантайме Next это будет в консоли браузера)
-  console.warn('NEXT_PUBLIC_API_URL is not set');
+  console.warn("NEXT_PUBLIC_API_URL is not set");
 }
 
 export async function apiFetch<T>(
@@ -17,14 +15,14 @@ export async function apiFetch<T>(
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: Bearer ${token} } : {}),
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
+    const text = await res.text().catch(() => "");
     throw new Error(`API ${res.status}: ${text || res.statusText}`);
   }
 

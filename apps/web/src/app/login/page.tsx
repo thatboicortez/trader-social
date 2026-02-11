@@ -1,6 +1,6 @@
 "use client";
 
-import { api } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -16,11 +16,11 @@ export default function LoginPage() {
     e.preventDefault();
     setErr(null);
     setLoading(true);
-    try {
-      const res = await api<{ access_token?: string; token?: string }>("/auth/login", {
-        method: "POST",
-        json: { email, password },
-      });
+    try {     
+const res = await apiFetch<{ access_token?: string; token?: string }>("/auth/login", {
+  method: "POST",
+  body: JSON.stringify({ email, password }),
+});
 
       const token = res.access_token || res.token;
       if (!token) throw new Error("No token returned from API");

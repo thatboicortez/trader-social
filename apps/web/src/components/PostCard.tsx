@@ -1,5 +1,5 @@
 // apps/web/src/components/PostCard.tsx
-import type { Post } from '@/src/types/post';
+import type { Post } from '@/types/post';
 
 type Props = {
   post: Post;

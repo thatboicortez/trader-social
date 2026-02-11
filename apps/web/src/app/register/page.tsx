@@ -1,29 +1,41 @@
 "use client";
 
-import { api } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function RegisterPage() {
   const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
-    setLoading(true);
 
+    // простая валидация
+    if (!username.trim() || !email.trim() || !password) {
+      setErr("Please fill all fields");
+      return;
+    }
+
+    setLoading(true);
     try {
-      const res = await api<{ access_token?: string; token?: string }>(
+      const res = await apiFetch<{ access_token?: string; token?: string }>(
         "/auth/register",
         {
           method: "POST",
-          json: { email, password, username },
+          body: JSON.stringify({
+            email: email.trim(),
+            password,
+            username: username.trim(),
+          }),
         }
       );
 
@@ -50,6 +62,7 @@ export default function RegisterPage() {
             onChange={(e) => setUsername(e.target.value)}
             style={{ width: "100%", padding: 8 }}
             placeholder="Your username"
+            autoComplete="username"
           />
         </label>
 
@@ -60,6 +73,7 @@ export default function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
             style={{ width: "100%", padding: 8 }}
             placeholder="you@mail.com"
+            autoComplete="email"
           />
         </label>
 
@@ -71,6 +85,7 @@ export default function RegisterPage() {
             style={{ width: "100%", padding: 8 }}
             type="password"
             placeholder="••••••••"
+            autoComplete="new-password"
           />
         </label>
 

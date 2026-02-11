@@ -8,13 +8,10 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = getToken();
-    if (token) {
-      router.replace("/feed");
-    } else {
-      router.replace("/login");
-    }
+    const token = getToken(); // читает localStorage
+    router.replace(token ? "/feed" : "/login");
   }, [router]);
 
+  // можно вернуть пусто или простой "Loading..."
   return null;
 }

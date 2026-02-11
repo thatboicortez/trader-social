@@ -9,13 +9,12 @@ export default function HomePage() {
 
   useEffect(() => {
     const token = getToken();
-    router.replace(token ? "/feed" : "/login");
+    if (token) {
+      router.replace("/feed");
+    } else {
+      router.replace("/login");
+    }
   }, [router]);
 
-  // можно показать лоадер, чтобы не мигало
-  return (
-    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
-      <div style={{ opacity: 0.7 }}>Loading…</div>
-    </main>
-  );
+  return null;
 }

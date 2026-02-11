@@ -1,46 +1,32 @@
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
+import { getToken } from './auth';
 
-type Json = Record<string, any>;
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export async function api<T = any>(
+if (!API_URL) {
+  // чтобы не молчать если env не задан
+  // (в рантайме Next это будет в консоли браузера)
+  console.warn('NEXT_PUBLIC_API_URL is not set');
+}
+
+export async function apiFetch<T>(
   path: string,
-  options: RequestInit & { json?: Json } = {}
+  options: RequestInit = {},
 ): Promise<T> {
-  const url = path.startsWith("http") ? path : `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+  const token = getToken();
 
-  const headers = new Headers(options.headers || {});
-  headers.set("Accept", "application/json");
-
-  if (options.json !== undefined) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token");
-    if (token) headers.set("Authorization", `Bearer ${token}`);
-  }
-
-  const res = await fetch(url, {
+  const res = await fetch(`${API_URL}${path}`, {
     ...options,
-    headers,
-    body: options.json !== undefined ? JSON.stringify(options.json) : options.body,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: Bearer ${token} } : {}),
+      ...(options.headers || {}),
+    },
   });
 
-  const text = await res.text();
-  let data: any = null;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text;
-  }
-
   if (!res.ok) {
-    const message =
-      (data && (data.message || data.error)) ||
-      `Request failed: ${res.status} ${res.statusText}`;
-    throw new Error(Array.isArray(message) ? message.join(", ") : message);
+    const text = await res.text().catch(() => '');
+    throw new Error(`API ${res.status}: ${text || res.statusText}`);
   }
 
-  return data as T;
+  return res.json() as Promise<T>;
 }

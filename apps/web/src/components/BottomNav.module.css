@@ -1,0 +1,36 @@
+.wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.nav {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: min(520px, calc(100% - 24px));
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 18px;
+  padding: 10px;
+  backdrop-filter: blur(12px);
+}
+
+.item {
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.active {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}

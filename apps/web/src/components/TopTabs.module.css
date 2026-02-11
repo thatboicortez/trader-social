@@ -1,0 +1,30 @@
+.wrap {
+  display: flex;
+  justify-content: center;
+  padding: 14px 12px 10px;
+}
+
+.pill {
+  display: inline-flex;
+  gap: 6px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.10);
+  padding: 6px;
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+}
+
+.tab {
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,0.7);
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.active {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}

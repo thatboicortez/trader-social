@@ -8,11 +8,70 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  username     String   @unique
-  passwordHash String
-  displayName  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(uuid())
+  email            String   @unique
+  username         String   @unique
+  passwordHash     String
+  displayName      String?
+  isEmailVerified  Boolean  @default(false)
+  refreshTokenHash String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // relations
+  posts            Post[]
+  channel          Channel?
+  memberships      ChannelMember[]
+}
+
+model Channel {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique   // например "cryptomannn"
+  about       String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId     String   @unique
+  owner       User     @relation(fields: [ownerId], references: [id])
+
+  members     ChannelMember[]
+  posts       Post[]
+}
+
+model ChannelMember {
+  id         String   @id @default(cuid())
+  userId     String
+  channelId  String
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+  channel    Channel  @relation(fields: [channelId], references: [id])
+
+  @@unique([userId, channelId])
+  @@index([channelId])
+  @@index([userId])
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+
+  channelId String?
+  channel   Channel? @relation(fields: [channelId], references: [id])
+}
+
+model EmailVerification {
+  id        String   @id @default(uuid())
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
 }

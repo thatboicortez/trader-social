@@ -1,15 +1,24 @@
-﻿import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+﻿import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../prisma/prisma.service';
-import bcrypt from 'bcryptjs';
 
-type PublicUser = {
-  id: string;
-  email: string;
-  username: string;
-  displayName: string | null;
-  createdAt: Date;
-};
+import { PrismaService } from '../prisma/prisma.service';
+
+import { RegisterDto } from './dto/register.dto';
+import { VerifyDto } from './dto/verify.dto';
+import { LoginDto } from './dto/login.dto';
+
+function normalizeEmail(email: string) {
+  return (email || '').trim().toLowerCase();
+}
+
+function generate6DigitCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 @Injectable()
 export class AuthService {
@@ -18,58 +27,123 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
-  private signToken(userId: string) {
-    return this.jwt.sign({ sub: userId });
-  }
+  // REGISTER: создаёт пользователя, сохраняет хэш кода, отправляет email
+  async register(dto: RegisterDto) {
+    const email = normalizeEmail(dto.email);
+    const username = (dto.username || '').trim();
+    const password = (dto.password || '').trim();
 
-  async register(dto: { email: string; username: string; password: string; displayName?: string }) {
-    const email = dto.email.toLowerCase().trim();
-    const username = dto.username.trim();
-    const displayName = dto.displayName?.trim() || null;
+    if (!email) throw new BadRequestException('Email is required');
+    if (!username) throw new BadRequestException('Username is required');
+    if (!password) throw new BadRequestException('Password is required');
 
-    const exists = await this.prisma.user.findFirst({
+    // 1) uniqueness
+    const existing = await this.prisma.user.findFirst({
       where: { OR: [{ email }, { username }] },
+      select: { id: true, email: true, username: true },
     });
-    if (exists) throw new BadRequestException('Email or username already taken');
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    if (existing?.email === email) {
+      throw new BadRequestException('Email already in use');
+    }
+    if (existing?.username === username) {
+      throw new BadRequestException('Username already in use');
+    }
 
+    // 2) create user
+    const passwordHash = await bcrypt.hash(password, 12);
     const user = await this.prisma.user.create({
-      data: { email, username, passwordHash, displayName },
-      select: { id: true, email: true, username: true, displayName: true, createdAt: true },
+      data: {
+        email,
+        username,
+        passwordHash,
+        displayName: username,
+        isEmailVerified: false,
+      },
+      select: { id: true },
     });
 
-    return {
-      token: this.signToken(user.id),
-      user,
-    };
+    // 3) create verification code record
+    const code = generate6DigitCode();
+    const codeHash = await bcrypt.hash(code, 10);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await this.prisma.emailVerification.create({
+      data: { email, codeHash, expiresAt },
+    });
+
+    // 4) send email
+    // await this.email.sendVerificationCode({ to: email, code });
+
+    return { ok: true, userId: user.id };
   }
 
-  async login(dto: { email: string; password: string }) {
-    const email = dto.email.toLowerCase().trim();
+  // LOGIN: выдаёт accessToken
+  async login(dto: LoginDto) {
+    const email = normalizeEmail(dto.email);
+    const password = (dto.password || '').trim();
+
+    if (!email) throw new BadRequestException('Email is required');
+    if (!password) throw new BadRequestException('Password is required');
 
     const user = await this.prisma.user.findUnique({
       where: { email },
-      // важно: нужен hash
-      select: { id: true, email: true, username: true, displayName: true, createdAt: true, passwordHash: true },
+      select: { id: true, passwordHash: true, isEmailVerified: true },
     });
 
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
-    const ok = await bcrypt.compare(dto.password, user.passwordHash);
+    const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
 
-    const publicUser: PublicUser = {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      displayName: user.displayName,
-      createdAt: user.createdAt,
-    };
+    // если хочешь запретить логин без верификации — раскомментируй
+    // if (!user.isEmailVerified) throw new UnauthorizedException('Email not verified');
 
-    return {
-      token: this.signToken(user.id),
-      user: publicUser,
-    };
+    const accessToken = this.jwt.sign({ sub: user.id });
+
+    return { accessToken };
+  }
+
+  // VERIFY: проверяет код и помечает юзера verified
+  async verifyEmail(dto: VerifyDto) {
+    const email = normalizeEmail(dto.email);
+    const code = (dto.code || '').trim();
+
+    if (!email) throw new BadRequestException('Email is required');
+    if (!code) throw new BadRequestException('Code is required');
+
+    // 1) последняя запись кода
+    const record = await this.prisma.emailVerification.findFirst({
+      where: { email },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!record) {
+      throw new BadRequestException('No verification code found');
+    }
+
+    // 2) срок
+    if (record.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Verification code expired');
+    }
+
+    // 3) compare bcrypt
+    const ok = await bcrypt.compare(code, record.codeHash);
+    if (!ok) {
+      throw new BadRequestException('Invalid verification code');
+    }
+
+    // 4) mark verified
+    await this.prisma.user.update({
+      where: { email },
+      data: { isEmailVerified: true },
+    });
+
+    // 5) delete code record
+    await this.prisma.emailVerification.delete({
+      where: { id: record.id },
+    });
+
+    return { ok: true };
   }
 }

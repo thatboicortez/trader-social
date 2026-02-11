@@ -1,15 +1,14 @@
+export const TOKEN_KEY = 'accessToken';
+
+export function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(TOKEN_KEY);
+}
+
 export function setToken(token: string) {
-  localStorage.setItem("token", token);
+  localStorage.setItem(TOKEN_KEY, token);
 }
 
-export function getToken() {
-  return localStorage.getItem("token");
-}
-
-export function logout() {
-  localStorage.removeItem("token");
-}
-
-export function isAuthed() {
-  return !!getToken();
+export function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
 }

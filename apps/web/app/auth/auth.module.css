@@ -56,20 +56,27 @@
 }
 
 .right {
-  max-width: 520px;
+  max-width: 520px; /* оставляем шире */
 }
 
+/* Вариант B: заголовки той же "колонкой", что и кнопки */
+.h1,
+.h2 {
+  max-width: 360px;
+}
+
+/* Поднимаем заголовки выше */
 .h1 {
   font-size: clamp(40px, 4.2vw, 64px);
   line-height: 1.05;
-  margin: 0 0 14px 0;
+  margin: 0 0 10px 0;
   font-weight: 900;
   letter-spacing: -0.02em;
 }
 
 .h2 {
   font-size: 28px;
-  margin: 0 0 20px 0;
+  margin: 0 0 14px 0;
   font-weight: 800;
 }
 
@@ -80,20 +87,29 @@
   max-width: 100%;
 }
 
+/* Кнопки делаем не такими широкими, как у X:
+   у кнопок ширина колонкой (360px) + внутренние отступы */
 .socialBtn,
 .primaryBtn,
 .outlineBtn {
   height: 44px;
+  width: 100%;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.22);
   background: rgba(255,255,255,0.92);
   color: #0f1419;
-  font-weight: 700;
+
+  /* чуть жирнее, как на X */
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  padding: 0 18px;
   transition: transform .08s ease, background .12s ease, border-color .12s ease;
 }
 
@@ -153,7 +169,7 @@
 .orText {
   font-size: 12px;
   opacity: 0.85;
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: 0.18em;
 }
 
@@ -162,17 +178,19 @@
   font-size: 12px;
   opacity: 0.78;
   line-height: 1.4;
+  max-width: 360px; /* чтобы текст тоже был колонкой */
 }
 
 .signinBox {
   margin-top: 8px;
   display: grid;
   gap: 10px;
+  max-width: 360px; /* колонка */
 }
 
 .signinText {
   margin: 0;
-  font-weight: 700;
+  font-weight: 800;
   opacity: 0.92;
 }
 
@@ -180,17 +198,27 @@
   .shell {
     grid-template-columns: 1fr;
     padding: 28px 18px;
-    gap: 28px;
+    gap: 22px;
   }
+
   .left {
     justify-content: flex-start;
   }
+
   .bigLogo {
     width: 160px;
     height: 160px;
     justify-self: start;
   }
+
   .actions {
     width: 100%;
+  }
+
+  .h1,
+  .h2,
+  .disclaimer,
+  .signinBox {
+    max-width: 100%;
   }
 }

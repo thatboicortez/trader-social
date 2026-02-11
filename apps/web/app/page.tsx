@@ -8,10 +8,15 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = getToken(); // читает localStorage
-    router.replace(token ? "/feed" : "/login");
+    const token = getToken(); // localStorage
+    router.replace(token ? "/feed" : "/auth");
   }, [router]);
 
-  // можно вернуть пусто или простой "Loading..."
-  return null;
+  return (
+    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
+      <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 14 }}>
+        Loading…
+      </div>
+    </main>
+  );
 }

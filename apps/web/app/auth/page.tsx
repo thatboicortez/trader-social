@@ -147,25 +147,18 @@ export default function AuthPage() {
         </section>
       </div>
 
-      {createOpen && (
-        <CreateAccountModal
-          method={method}
-          name={signupName}
-          value={signupValue}
-          password={password}
-          loading={loading}
-          error={err}
-          onChangeName={setSignupName}
-          onChangeValue={setSignupValue}
-          onChangePassword={setPassword}
-          onToggleMethod={() => {
-            // телефон не используем
-            setMethod("email");
-          }}
-          onClose={onCloseAll}
-          onNext={onNextFromCreate}
-        />
-      )}
+{createOpen && (
+  <CreateAccountModal
+    name={signupName}
+    email={signupValue}
+    password={password}
+    onChangeName={setSignupName}
+    onChangeEmail={setSignupValue}
+    onChangePassword={setPassword}
+    onClose={onCloseAll}
+    onNext={onNextFromCreate}
+  />
+)}
 
       {verifyOpen && (
         <VerifyCodeModal

@@ -1,12 +1,16 @@
-﻿import {
+﻿// apps/api/src/auth/auth.service.ts
+
+import {
   BadRequestException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+
 import { RegisterDto } from './dto/register.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { LoginDto } from './dto/login.dto';
@@ -27,6 +31,7 @@ export class AuthService {
     private readonly email: EmailService,
   ) {}
 
+  // REGISTER: создаёт пользователя + шлёт код на почту
   async register(dto: RegisterDto) {
     const email = normalizeEmail(dto.email);
     const username = (dto.username || '').trim();
@@ -57,6 +62,9 @@ export class AuthService {
       select: { id: true },
     });
 
+    // удалим старые коды (на всякий случай)
+    await this.prisma.emailVerification.deleteMany({ where: { email } });
+
     const code = generate6DigitCode();
     const codeHash = await bcrypt.hash(code, 10);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -70,6 +78,66 @@ export class AuthService {
     return { ok: true, userId: user.id };
   }
 
+  // RESEND CODE: если юзер уже есть, но не verified — шлём новый код
+  async resendVerificationCode(emailRaw: string) {
+    const email = normalizeEmail(emailRaw);
+    if (!email) throw new BadRequestException('Email is required');
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, isEmailVerified: true },
+    });
+
+    if (!user) throw new BadRequestException('User not found');
+    if (user.isEmailVerified) return { ok: true }; // уже верифицирован — нечего слать
+
+    await this.prisma.emailVerification.deleteMany({ where: { email } });
+
+    const code = generate6DigitCode();
+    const codeHash = await bcrypt.hash(code, 10);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await this.prisma.emailVerification.create({
+      data: { email, codeHash, expiresAt },
+    });
+
+    await this.email.sendVerificationCode({ to: email, code });
+
+    return { ok: true };
+  }
+
+  // VERIFY: проверяет код и помечает юзера verified
+  async verifyEmail(dto: VerifyDto) {
+    const email = normalizeEmail(dto.email);
+    const code = (dto.code || '').trim();
+
+    if (!email) throw new BadRequestException('Email is required');
+    if (!code) throw new BadRequestException('Code is required');
+
+    const record = await this.prisma.emailVerification.findFirst({
+      where: { email },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!record) throw new BadRequestException('No verification code found');
+    if (record.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Verification code expired');
+    }
+
+    const ok = await bcrypt.compare(code, record.codeHash);
+    if (!ok) throw new BadRequestException('Invalid verification code');
+
+    await this.prisma.user.update({
+      where: { email },
+      data: { isEmailVerified: true },
+    });
+
+    await this.prisma.emailVerification.deleteMany({ where: { email } });
+
+    return { ok: true };
+  }
+
+  // LOGIN: выдаёт accessToken
   async login(dto: LoginDto) {
     const email = normalizeEmail(dto.email);
     const password = (dto.password || '').trim();
@@ -87,38 +155,10 @@ export class AuthService {
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
 
+    // если хочешь запретить логин без верификации — включи:
+    // if (!user.isEmailVerified) throw new UnauthorizedException('Email not verified');
+
     const accessToken = this.jwt.sign({ sub: user.id });
     return { accessToken };
-  }
-
-  async verifyEmail(dto: VerifyDto) {
-    const email = normalizeEmail(dto.email);
-    const code = (dto.code || '').trim();
-
-    if (!email) throw new BadRequestException('Email is required');
-    if (!code) throw new BadRequestException('Code is required');
-
-    const record = await this.prisma.emailVerification.findFirst({
-      where: { email },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (!record) throw new BadRequestException('No verification code found');
-
-    if (record.expiresAt.getTime() < Date.now()) {
-      throw new BadRequestException('Verification code expired');
-    }
-
-    const ok = await bcrypt.compare(code, record.codeHash);
-    if (!ok) throw new BadRequestException('Invalid verification code');
-
-    await this.prisma.user.update({
-      where: { email },
-      data: { isEmailVerified: true },
-    });
-
-    await this.prisma.emailVerification.delete({ where: { id: record.id } });
-
-    return { ok: true };
   }
 }

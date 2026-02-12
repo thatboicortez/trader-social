@@ -22,23 +22,21 @@
   background: radial-gradient(1000px 600px at 30% 40%, rgba(0,0,0,0.35), rgba(0,0,0,0.75));
 }
 
-/* ВАЖНО: больше не центрируем контент по вертикали */
 .shell {
   position: relative;
   z-index: 1;
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
-  align-items: start;              /* было center */
+  align-items: center;
   gap: 48px;
-  padding: 56px 64px;              /* верх меньше => заголовок выше */
+  padding: 48px 64px;
 }
 
 .left {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding-top: 24px;
 }
 
 .bigLogo {
@@ -57,15 +55,8 @@
   user-select: none;
 }
 
-/* Правая часть: тоже сверху, не по центру */
 .right {
   max-width: 520px;
-  padding-top: 40px;              /* поднимет блок ближе к "Happening now" */
-}
-
-/* Чтобы заголовки были на одной левой линии с кнопками */
-.h1, .h2, .actions, .disclaimer, .signinBox {
-  max-width: 360px;               /* как у X */
 }
 
 .h1 {
@@ -82,15 +73,14 @@
   font-weight: 800;
 }
 
-/* Контейнер кнопок — уже и с отступами как у X */
+/* ✅ главное: ширина как у X (не во всю) */
 .actions {
   display: grid;
   gap: 12px;
   width: 100%;
-  margin-top: 8px;
+  max-width: 360px;
 }
 
-/* Кнопки на всю ширину контейнера, но контейнер ограничен 360px */
 .socialBtn,
 .primaryBtn,
 .outlineBtn {
@@ -100,7 +90,12 @@
   border: 1px solid rgba(255,255,255,0.22);
   background: rgba(255,255,255,0.92);
   color: #0f1419;
-  font-weight: 800;               /* жирнее как на фото 1 */
+
+  /* ✅ чуть жирнее/плотнее текст на кнопках */
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.1px;
+
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -122,7 +117,10 @@
   font-weight: 900;
 }
 
-.primaryBtn { background: #ffffff; }
+.primaryBtn {
+  background: #ffffff;
+  border-color: rgba(255,255,255,0.22);
+}
 .primaryBtn:hover { background: rgba(255,255,255,0.95); }
 
 .outlineBtn {
@@ -130,7 +128,6 @@
   color: #fff;
   border-color: rgba(255,255,255,0.35);
 }
-
 .outlineBtn:hover { border-color: rgba(255,255,255,0.55); }
 
 .socialBtn:active,
@@ -169,30 +166,40 @@
 
 .signinText {
   margin: 0;
-  font-weight: 700;
+  font-weight: 800;
   opacity: 0.92;
 }
 
-/* Мобильная версия */
+/* ✅ MOBILE: как у X — блок выше, кнопки не во всю ширину */
 @media (max-width: 900px) {
   .shell {
     grid-template-columns: 1fr;
-    padding: 34px 18px;          /* меньше сверху => выше заголовок */
-    gap: 18px;
+
+    /* поднимаем всё вверх */
     align-items: start;
+    align-content: start;
+
+    padding: 56px 18px 28px;
+    gap: 22px;
   }
 
-  .left { display: none; }        /* как у X на мобилке: без левого блока */
+  /* убираем левую колонку, иначе она толкает контент вниз */
+  .left { display: none; }
 
+  /* центрируем правый блок и фиксируем ширину как у X */
   .right {
-    padding-top: 10px;
-    max-width: 100%;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
   }
 
-  /* Центрируем контейнер 360px по экрану, но выравнивание текста/кнопок слева */
-  .h1, .h2, .actions, .disclaimer, .signinBox {
-    max-width: 360px;
-    margin-left: auto;
-    margin-right: auto;
+  /* заголовки + кнопки будут на одной линии слева (как у X) */
+  .actions {
+    max-width: 340px;
+  }
+
+  .h2 {
+    margin-bottom: 16px;
+    font-weight: 800;
   }
 }

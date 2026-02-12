@@ -1,16 +1,12 @@
-﻿// apps/api/src/auth/auth.service.ts
-
-import {
+﻿import {
   BadRequestException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
-
 import { RegisterDto } from './dto/register.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { LoginDto } from './dto/login.dto';
@@ -31,7 +27,6 @@ export class AuthService {
     private readonly email: EmailService,
   ) {}
 
-  // REGISTER: создаёт пользователя + шлёт код на почту
   async register(dto: RegisterDto) {
     const email = normalizeEmail(dto.email);
     const username = (dto.username || '').trim();
@@ -43,7 +38,7 @@ export class AuthService {
 
     const existing = await this.prisma.user.findFirst({
       where: { OR: [{ email }, { username }] },
-      select: { id: true, email: true, username: true },
+      select: { email: true, username: true },
     });
 
     if (existing?.email === email) throw new BadRequestException('Email already in use');
@@ -62,9 +57,6 @@ export class AuthService {
       select: { id: true },
     });
 
-    // удалим старые коды (на всякий случай)
-    await this.prisma.emailVerification.deleteMany({ where: { email } });
-
     const code = generate6DigitCode();
     const codeHash = await bcrypt.hash(code, 10);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -78,35 +70,27 @@ export class AuthService {
     return { ok: true, userId: user.id };
   }
 
-  // RESEND CODE: если юзер уже есть, но не verified — шлём новый код
-  async resendVerificationCode(emailRaw: string) {
-    const email = normalizeEmail(emailRaw);
+  async login(dto: LoginDto) {
+    const email = normalizeEmail(dto.email);
+    const password = (dto.password || '').trim();
+
     if (!email) throw new BadRequestException('Email is required');
+    if (!password) throw new BadRequestException('Password is required');
 
     const user = await this.prisma.user.findUnique({
       where: { email },
-      select: { id: true, isEmailVerified: true },
+      select: { id: true, passwordHash: true, isEmailVerified: true },
     });
 
-    if (!user) throw new BadRequestException('User not found');
-    if (user.isEmailVerified) return { ok: true }; // уже верифицирован — нечего слать
+    if (!user) throw new UnauthorizedException('Invalid credentials');
 
-    await this.prisma.emailVerification.deleteMany({ where: { email } });
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) throw new UnauthorizedException('Invalid credentials');
 
-    const code = generate6DigitCode();
-    const codeHash = await bcrypt.hash(code, 10);
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-    await this.prisma.emailVerification.create({
-      data: { email, codeHash, expiresAt },
-    });
-
-    await this.email.sendVerificationCode({ to: email, code });
-
-    return { ok: true };
+    const accessToken = this.jwt.sign({ sub: user.id });
+    return { accessToken };
   }
 
-  // VERIFY: проверяет код и помечает юзера verified
   async verifyEmail(dto: VerifyDto) {
     const email = normalizeEmail(dto.email);
     const code = (dto.code || '').trim();
@@ -132,33 +116,29 @@ export class AuthService {
       data: { isEmailVerified: true },
     });
 
-    await this.prisma.emailVerification.deleteMany({ where: { email } });
+    await this.prisma.emailVerification.delete({ where: { id: record.id } });
 
     return { ok: true };
   }
 
-  // LOGIN: выдаёт accessToken
-  async login(dto: LoginDto) {
-    const email = normalizeEmail(dto.email);
-    const password = (dto.password || '').trim();
-
-    if (!email) throw new BadRequestException('Email is required');
-    if (!password) throw new BadRequestException('Password is required');
+  // ✅ ВОТ ЭТО ДОБАВЛЯЕМ (чтобы /auth/me работал)
+  async me(userId: string) {
+    if (!userId) throw new UnauthorizedException('Unauthorized');
 
     const user = await this.prisma.user.findUnique({
-      where: { email },
-      select: { id: true, passwordHash: true, isEmailVerified: true },
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        displayName: true,
+        isEmailVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
-    if (!user) throw new UnauthorizedException('Invalid credentials');
-
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) throw new UnauthorizedException('Invalid credentials');
-
-    // если хочешь запретить логин без верификации — включи:
-    // if (!user.isEmailVerified) throw new UnauthorizedException('Email not verified');
-
-    const accessToken = this.jwt.sign({ sub: user.id });
-    return { accessToken };
+    if (!user) throw new UnauthorizedException('User not found');
+    return user;
   }
 }

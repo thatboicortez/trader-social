@@ -1,32 +1,57 @@
 "use client";
 
+import { useMemo } from "react";
 import styles from "./modal.module.css";
 
-type SignupMethod = "phone" | "email";
-
 export function CreateAccountModal(props: {
-  method: SignupMethod;
-  name: string;
-  value: string;
+  name: string; // displayName (можно же и username)
+  email: string;
+  password: string;
+
   onChangeName: (v: string) => void;
-  onChangeValue: (v: string) => void;
-  onToggleMethod: () => void;
+  onChangeEmail: (v: string) => void;
+  onChangePassword: (v: string) => void;
+
   onClose: () => void;
-  onNext: () => void;
+  onNext: () => void; // дальше: отправка /auth/register и открытие VerifyCodeModal
 }) {
-  const { method, name, value, onChangeName, onChangeValue, onToggleMethod, onClose, onNext } = props;
+  const {
+    name,
+    email,
+    password,
+    onChangeName,
+    onChangeEmail,
+    onChangePassword,
+    onClose,
+    onNext,
+  } = props;
 
-  const secondaryLabel = method === "phone" ? "Phone" : "Email";
-  const switchText = method === "phone" ? "Use email instead" : "Use phone instead";
-  const placeholder = method === "phone" ? "+31 6 1234 5678" : "you@mail.com";
-
-  const canNext = name.trim().length >= 2 && value.trim().length >= 3;
+  const canNext = useMemo(() => {
+    const n = name.trim();
+    const e = email.trim();
+    const p = password.trim();
+    // минимальные проверки (чтобы кнопка не была всегда активна)
+    if (n.length < 2) return false;
+    if (!e.includes("@") || e.length < 5) return false;
+    if (p.length < 6) return false;
+    return true;
+  }, [name, email, password]);
 
   return (
-    <div className={styles.backdrop} onMouseDown={onClose} role="dialog" aria-modal="true">
+    <div
+      className={styles.backdrop}
+      onMouseDown={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
       <div className={styles.modal} onMouseDown={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <button className={styles.iconBtn} type="button" onClick={onClose} aria-label="Close">
+          <button
+            className={styles.iconBtn}
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+          >
             ✕
           </button>
           <div className={styles.title}>X</div>
@@ -51,27 +76,44 @@ export function CreateAccountModal(props: {
 
           <div className={styles.field}>
             <div className={styles.labelRow}>
-              <span className={styles.label}>{secondaryLabel}</span>
-              <span className={styles.switchLink} onClick={onToggleMethod}>
-                {switchText}
-              </span>
+              <span className={styles.label}>Email</span>
             </div>
             <input
               className={styles.input}
-              value={value}
-              onChange={(e) => onChangeValue(e.target.value)}
-              placeholder={placeholder}
-              inputMode={method === "phone" ? "tel" : "email"}
+              value={email}
+              onChange={(e) => onChangeEmail(e.target.value)}
+              placeholder="you@mail.com"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+            />
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.labelRow}>
+              <span className={styles.label}>Password</span>
+            </div>
+            <input
+              className={styles.input}
+              value={password}
+              onChange={(e) => onChangePassword(e.target.value)}
+              placeholder="Minimum 6 characters"
+              type="password"
             />
           </div>
 
           <p className={styles.helper}>
-            Date of birth и прочие поля добавим позже — сейчас собираем UX как у X.
+            Сейчас делаем только email-flow. Телефон убрали.
           </p>
         </div>
 
         <div className={styles.footer}>
-          <button className={styles.nextBtn} type="button" disabled={!canNext} onClick={onNext}>
+          <button
+            className={styles.nextBtn}
+            type="button"
+            disabled={!canNext}
+            onClick={onNext}
+          >
             Next
           </button>
         </div>

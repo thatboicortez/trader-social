@@ -1,20 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import styles from "./auth.module.css";
 import { CreateAccountModal } from "./components/CreateAccountModal";
 import { VerifyCodeModal } from "./components/VerifyCodeModal";
+import { apiFetch } from "@/lib/api";
+import { setToken } from "@/lib/auth";
 
 type SignupMethod = "phone" | "email";
 
 export default function AuthPage() {
+  const router = useRouter();
+
   const [createOpen, setCreateOpen] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
-  const [method, setMethod] = useState<SignupMethod>("phone");
+
+  // только email, телефон пока отключаем
+  const [method, setMethod] = useState<SignupMethod>("email");
+
   const [signupName, setSignupName] = useState("");
-  const [signupValue, setSignupValue] = useState(""); // phone or email
+  const [signupValue, setSignupValue] = useState(""); // email
+  const [password, setPassword] = useState("");
+
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const onOpenCreate = () => {
+    setErr(null);
     setCreateOpen(true);
     setVerifyOpen(false);
   };
@@ -24,19 +37,62 @@ export default function AuthPage() {
     setVerifyOpen(false);
   };
 
-  const onNextFromCreate = () => {
-    // UI-only: переходим на следующий "Verify code"
-    setCreateOpen(false);
-    setVerifyOpen(true);
-  };
+  async function onNextFromCreate() {
+    setErr(null);
+
+    const username = signupName.trim();
+    const email = signupValue.trim().toLowerCase();
+
+    if (!username) return setErr("Name is required");
+    if (!email) return setErr("Email is required");
+    if (!password.trim()) return setErr("Password is required");
+
+    setLoading(true);
+    try {
+      // register -> создаёт юзера + генерит код (и должен отправить email, когда EmailService включишь)
+      await apiFetch<{ ok: boolean; userId: string }>(`/auth/register`, {
+        method: "POST",
+        body: JSON.stringify({ email, username, password }),
+      });
+
+      setCreateOpen(false);
+      setVerifyOpen(true);
+    } catch (e: any) {
+      setErr(e?.message || "Register failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onVerify(code: string) {
+    setErr(null);
+    setLoading(true);
+    try {
+      const email = signupValue.trim().toLowerCase();
+
+      await apiFetch<{ ok: boolean }>(`/auth/verify`, {
+        method: "POST",
+        body: JSON.stringify({ email, code }),
+      });
+
+      // после verify — логинимся и кидаем в /feed
+      const loginRes = await apiFetch<{ accessToken: string }>(`/auth/login`, {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+
+      setToken(loginRes.accessToken);
+      router.push("/feed");
+    } catch (e: any) {
+      setErr(e?.message || "Verify failed");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main className={styles.page}>
-      {/* Background: положи картинку в apps/web/public/auth-bg.jpg */}
-      <div
-        className={styles.bg}
-        style={{ backgroundImage: 'url("/auth-bg.jpg")' }}
-      />
+      <div className={styles.bg} style={{ backgroundImage: 'url("/auth-bg.jpg")' }} />
       <div className={styles.bgOverlay} />
 
       <div className={styles.shell}>
@@ -51,14 +107,14 @@ export default function AuthPage() {
           <h2 className={styles.h2}>Join and publish.</h2>
 
           <div className={styles.actions}>
-            <button className={styles.socialBtn} type="button">
+            <button className={styles.socialBtn} type="button" disabled>
               <span className={styles.socialIcon} aria-hidden="true">
                 G
               </span>
               Sign up with Google
             </button>
 
-            <button className={styles.socialBtn} type="button">
+            <button className={styles.socialBtn} type="button" disabled>
               <span className={styles.socialIcon} aria-hidden="true">
                 
               </span>
@@ -75,17 +131,15 @@ export default function AuthPage() {
               Create account
             </button>
 
+            {err ? <p style={{ color: "crimson", margin: 0 }}>{err}</p> : null}
+
             <p className={styles.disclaimer}>
               By signing up, you agree to the Terms of Service and Privacy Policy.
             </p>
 
             <div className={styles.signinBox}>
               <p className={styles.signinText}>Already have an account?</p>
-              <button
-                className={styles.outlineBtn}
-                type="button"
-                onClick={() => alert("Sign in UI позже. Сейчас делаем signup flow.")}
-              >
+              <button className={styles.outlineBtn} type="button" disabled>
                 Sign in
               </button>
             </div>
@@ -93,17 +147,20 @@ export default function AuthPage() {
         </section>
       </div>
 
-      {/* Modals */}
       {createOpen && (
         <CreateAccountModal
           method={method}
           name={signupName}
           value={signupValue}
+          password={password}
+          loading={loading}
+          error={err}
           onChangeName={setSignupName}
           onChangeValue={setSignupValue}
+          onChangePassword={setPassword}
           onToggleMethod={() => {
-            setMethod((m) => (m === "phone" ? "email" : "phone"));
-            setSignupValue("");
+            // телефон не используем
+            setMethod("email");
           }}
           onClose={onCloseAll}
           onNext={onNextFromCreate}
@@ -114,12 +171,15 @@ export default function AuthPage() {
         <VerifyCodeModal
           method={method}
           value={signupValue}
+          loading={loading}
+          error={err}
           onBack={() => {
+            setErr(null);
             setVerifyOpen(false);
             setCreateOpen(true);
           }}
           onClose={onCloseAll}
-          onNext={() => alert("Дальше будет реальная регистрация/верификация. Сейчас UI готов.")}
+          onNext={onVerify}
         />
       )}
     </main>

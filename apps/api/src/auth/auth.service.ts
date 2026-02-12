@@ -5,9 +5,8 @@
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-
 import { PrismaService } from '../prisma/prisma.service';
-
+import { EmailService } from '../email/email.service';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { LoginDto } from './dto/login.dto';
@@ -25,9 +24,9 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    private readonly email: EmailService,
   ) {}
 
-  // REGISTER: создаёт пользователя, сохраняет хэш кода, отправляет email
   async register(dto: RegisterDto) {
     const email = normalizeEmail(dto.email);
     const username = (dto.username || '').trim();
@@ -37,21 +36,16 @@ export class AuthService {
     if (!username) throw new BadRequestException('Username is required');
     if (!password) throw new BadRequestException('Password is required');
 
-    // 1) uniqueness
     const existing = await this.prisma.user.findFirst({
       where: { OR: [{ email }, { username }] },
       select: { id: true, email: true, username: true },
     });
 
-    if (existing?.email === email) {
-      throw new BadRequestException('Email already in use');
-    }
-    if (existing?.username === username) {
-      throw new BadRequestException('Username already in use');
-    }
+    if (existing?.email === email) throw new BadRequestException('Email already in use');
+    if (existing?.username === username) throw new BadRequestException('Username already in use');
 
-    // 2) create user
     const passwordHash = await bcrypt.hash(password, 12);
+
     const user = await this.prisma.user.create({
       data: {
         email,
@@ -63,7 +57,6 @@ export class AuthService {
       select: { id: true },
     });
 
-    // 3) create verification code record
     const code = generate6DigitCode();
     const codeHash = await bcrypt.hash(code, 10);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -72,13 +65,11 @@ export class AuthService {
       data: { email, codeHash, expiresAt },
     });
 
-    // 4) send email
-    // await this.email.sendVerificationCode({ to: email, code });
+    await this.email.sendVerificationCode({ to: email, code });
 
     return { ok: true, userId: user.id };
   }
 
-  // LOGIN: выдаёт accessToken
   async login(dto: LoginDto) {
     const email = normalizeEmail(dto.email);
     const password = (dto.password || '').trim();
@@ -96,15 +87,10 @@ export class AuthService {
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
 
-    // если хочешь запретить логин без верификации — раскомментируй
-    // if (!user.isEmailVerified) throw new UnauthorizedException('Email not verified');
-
     const accessToken = this.jwt.sign({ sub: user.id });
-
     return { accessToken };
   }
 
-  // VERIFY: проверяет код и помечает юзера verified
   async verifyEmail(dto: VerifyDto) {
     const email = normalizeEmail(dto.email);
     const code = (dto.code || '').trim();
@@ -112,37 +98,26 @@ export class AuthService {
     if (!email) throw new BadRequestException('Email is required');
     if (!code) throw new BadRequestException('Code is required');
 
-    // 1) последняя запись кода
     const record = await this.prisma.emailVerification.findFirst({
       where: { email },
       orderBy: { createdAt: 'desc' },
     });
 
-    if (!record) {
-      throw new BadRequestException('No verification code found');
-    }
+    if (!record) throw new BadRequestException('No verification code found');
 
-    // 2) срок
     if (record.expiresAt.getTime() < Date.now()) {
       throw new BadRequestException('Verification code expired');
     }
 
-    // 3) compare bcrypt
     const ok = await bcrypt.compare(code, record.codeHash);
-    if (!ok) {
-      throw new BadRequestException('Invalid verification code');
-    }
+    if (!ok) throw new BadRequestException('Invalid verification code');
 
-    // 4) mark verified
     await this.prisma.user.update({
       where: { email },
       data: { isEmailVerified: true },
     });
 
-    // 5) delete code record
-    await this.prisma.emailVerification.delete({
-      where: { id: record.id },
-    });
+    await this.prisma.emailVerification.delete({ where: { id: record.id } });
 
     return { ok: true };
   }

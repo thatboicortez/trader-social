@@ -8,15 +8,21 @@ type SignupMethod = "phone" | "email";
 export function VerifyCodeModal(props: {
   method: SignupMethod;
   value: string;
+
+  loading?: boolean;
+  error?: string | null;
+
   onBack: () => void;
   onClose: () => void;
-  onNext: () => void;
+  onNext: (code: string) => void;
 }) {
-  const { method, value, onBack, onClose, onNext } = props;
+  const { method, value, loading, error, onBack, onClose, onNext } = props;
+
   const [code, setCode] = useState("");
 
   const label = method === "phone" ? "phone number" : "email";
-  const canNext = code.trim().length >= 4;
+  const cleanCode = code.replace(/\s+/g, "");
+  const canNext = cleanCode.length >= 4 && !loading;
 
   return (
     <div className={styles.backdrop} onMouseDown={onClose} role="dialog" aria-modal="true">
@@ -46,15 +52,25 @@ export function VerifyCodeModal(props: {
               inputMode="numeric"
               autoFocus
             />
-            <span className={styles.smallLink} onClick={() => alert("Resend будет позже (реальная интеграция).")}>
+            <span
+              className={styles.smallLink}
+              onClick={() => alert("Resend будет позже (реальная интеграция).")}
+            >
               Didn’t receive a code?
             </span>
           </div>
+
+          {error ? <p style={{ color: "crimson", margin: "8px 0 0" }}>{error}</p> : null}
         </div>
 
         <div className={styles.footer}>
-          <button className={styles.nextBtn} type="button" disabled={!canNext} onClick={onNext}>
-            Next
+          <button
+            className={styles.nextBtn}
+            type="button"
+            disabled={!canNext}
+            onClick={() => onNext(cleanCode)}
+          >
+            {loading ? "Loading..." : "Next"}
           </button>
         </div>
       </div>

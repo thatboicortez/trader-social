@@ -1,0 +1,125 @@
+.backdrop{
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(10px);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  padding: 14px;
+}
+
+.modal{
+  width: min(560px, 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: #000;
+  overflow: hidden;
+}
+
+.header{
+  height: 52px;
+  display: grid;
+  grid-template-columns: 44px 1fr 84px;
+  align-items: center;
+  padding: 0 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+
+.title{
+  text-align: center;
+  font-weight: 900;
+}
+
+.iconBtn{
+  width: 36px; height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  cursor: pointer;
+  justify-self: start;
+}
+
+.saveBtn{
+  justify-self: end;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: #fff;
+  color: #0f1419;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.saveBtn:disabled{
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.body{
+  padding-bottom: 14px;
+}
+
+.banner{
+  height: 170px;
+  background: rgba(255,255,255,0.10);
+}
+
+.avatarWrap{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  margin-top: -36px;
+}
+
+.avatar{
+  width: 84px; height: 84px;
+  border-radius: 50%;
+  border: 4px solid #000;
+  background: rgba(255,255,255,0.08);
+}
+
+.photoBtn{
+  margin-left: auto;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-weight: 800;
+}
+
+.field{
+  padding: 12px 14px 0;
+  display: grid;
+  gap: 6px;
+}
+
+.label{
+  font-size: 12px;
+  opacity: 0.75;
+  font-weight: 800;
+}
+
+.input, .textarea{
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  padding: 12px 12px;
+  outline: none;
+}
+
+.textarea{
+  resize: none;
+}
+
+.hint{
+  padding: 12px 14px 0;
+  font-size: 12px;
+  opacity: 0.7;
+}

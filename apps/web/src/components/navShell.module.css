@@ -1,0 +1,142 @@
+.shell {
+  min-height: 100vh;
+  background: #0b0b0d;
+  color: #eaeaf0;
+}
+
+.main {
+  min-height: 100vh;
+  padding-bottom: 64px; /* место под mobile bottom nav */
+}
+
+/* Mobile bottom nav (по умолчанию видимо) */
+.bottomNav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 56px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: rgba(10, 10, 12, 0.92);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  z-index: 50;
+}
+
+.bottomItem {
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+  color: rgba(234, 234, 240, 0.8);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.activeB {
+  color: #fff;
+}
+
+/* Desktop sidebar hidden on mobile */
+.sidebar {
+  display: none;
+}
+
+/* Desktop layout */
+@media (min-width: 980px) {
+  .shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+  }
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    padding: 18px 14px;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+
+  .brand {
+    font-weight: 900;
+    font-size: 22px;
+    margin: 6px 8px 18px;
+  }
+
+  .menu {
+    display: grid;
+    gap: 6px;
+  }
+
+  .navItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    text-decoration: none;
+    color: rgba(234, 234, 240, 0.9);
+    font-weight: 800;
+  }
+
+  .navItem:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .active {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .active .dot {
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  .sidebarFooter {
+    margin-top: auto;
+    display: grid;
+    gap: 10px;
+    padding-top: 14px;
+  }
+
+  .primary {
+    height: 44px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+    background: #fff;
+    color: #0f1419;
+    font-weight: 900;
+  }
+
+  .logout {
+    height: 40px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .logout:hover {
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+
+  .main {
+    padding-bottom: 0;
+  }
+
+  .bottomNav {
+    display: none;
+  }
+}

@@ -2,17 +2,21 @@
   BadRequestException,
   Injectable,
   UnauthorizedException,
-} from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../prisma/prisma.service';
-import { EmailService } from '../email/email.service';
-import { RegisterDto } from './dto/register.dto';
-import { VerifyDto } from './dto/verify.dto';
-import { LoginDto } from './dto/login.dto';
+} from "@nestjs/common";
+import * as bcrypt from "bcrypt";
+import { JwtService } from "@nestjs/jwt";
+import { PrismaService } from "../prisma/prisma.service";
+import { EmailService } from "../email/email.service";
+import { RegisterDto } from "./dto/register.dto";
+import { VerifyDto } from "./dto/verify.dto";
+import { LoginDto } from "./dto/login.dto";
 
 function normalizeEmail(email: string) {
-  return (email || '').trim().toLowerCase();
+  return (email || "").trim().toLowerCase();
+}
+
+function normalizeUsername(username: string) {
+  return (username || "").trim().replace(/^@+/, "");
 }
 
 function generate6DigitCode() {
@@ -29,20 +33,25 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     const email = normalizeEmail(dto.email);
-    const username = (dto.username || '').trim();
-    const password = (dto.password || '').trim();
+    const username = normalizeUsername(dto.username);
+    const displayName = (dto.displayName || "").trim();
+    const password = (dto.password || "").trim();
 
-    if (!email) throw new BadRequestException('Email is required');
-    if (!username) throw new BadRequestException('Username is required');
-    if (!password) throw new BadRequestException('Password is required');
+    if (!email) throw new BadRequestException("Email is required");
+    if (!username) throw new BadRequestException("Username is required");
+    if (!displayName) throw new BadRequestException("Name is required");
+    if (!password) throw new BadRequestException("Password is required");
 
+    // уникальность: email + username (displayName НЕ уникальный)
     const existing = await this.prisma.user.findFirst({
       where: { OR: [{ email }, { username }] },
       select: { email: true, username: true },
     });
 
-    if (existing?.email === email) throw new BadRequestException('Email already in use');
-    if (existing?.username === username) throw new BadRequestException('Username already in use');
+    if (existing?.email === email)
+      throw new BadRequestException("Email already in use");
+    if (existing?.username === username)
+      throw new BadRequestException("Username already in use");
 
     const passwordHash = await bcrypt.hash(password, 12);
 
@@ -50,8 +59,8 @@ export class AuthService {
       data: {
         email,
         username,
+        displayName, // вот главное отличие
         passwordHash,
-        displayName: username,
         isEmailVerified: false,
       },
       select: { id: true },
@@ -72,20 +81,20 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const email = normalizeEmail(dto.email);
-    const password = (dto.password || '').trim();
+    const password = (dto.password || "").trim();
 
-    if (!email) throw new BadRequestException('Email is required');
-    if (!password) throw new BadRequestException('Password is required');
+    if (!email) throw new BadRequestException("Email is required");
+    if (!password) throw new BadRequestException("Password is required");
 
     const user = await this.prisma.user.findUnique({
       where: { email },
       select: { id: true, passwordHash: true, isEmailVerified: true },
     });
 
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (!user) throw new UnauthorizedException("Invalid credentials");
 
     const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) throw new UnauthorizedException('Invalid credentials');
+    if (!ok) throw new UnauthorizedException("Invalid credentials");
 
     const accessToken = this.jwt.sign({ sub: user.id });
     return { accessToken };
@@ -93,23 +102,23 @@ export class AuthService {
 
   async verifyEmail(dto: VerifyDto) {
     const email = normalizeEmail(dto.email);
-    const code = (dto.code || '').trim();
+    const code = (dto.code || "").trim();
 
-    if (!email) throw new BadRequestException('Email is required');
-    if (!code) throw new BadRequestException('Code is required');
+    if (!email) throw new BadRequestException("Email is required");
+    if (!code) throw new BadRequestException("Code is required");
 
     const record = await this.prisma.emailVerification.findFirst({
       where: { email },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
-    if (!record) throw new BadRequestException('No verification code found');
+    if (!record) throw new BadRequestException("No verification code found");
     if (record.expiresAt.getTime() < Date.now()) {
-      throw new BadRequestException('Verification code expired');
+      throw new BadRequestException("Verification code expired");
     }
 
     const ok = await bcrypt.compare(code, record.codeHash);
-    if (!ok) throw new BadRequestException('Invalid verification code');
+    if (!ok) throw new BadRequestException("Invalid verification code");
 
     await this.prisma.user.update({
       where: { email },
@@ -121,9 +130,8 @@ export class AuthService {
     return { ok: true };
   }
 
-  // ✅ ВОТ ЭТО ДОБАВЛЯЕМ (чтобы /auth/me работал)
   async me(userId: string) {
-    if (!userId) throw new UnauthorizedException('Unauthorized');
+    if (!userId) throw new BadRequestException("UserId is required");
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -132,13 +140,40 @@ export class AuthService {
         email: true,
         username: true,
         displayName: true,
+        bio: true,
         isEmailVerified: true,
         createdAt: true,
-        updatedAt: true,
       },
     });
 
-    if (!user) throw new UnauthorizedException('User not found');
+    if (!user) throw new UnauthorizedException("Unauthorized");
+    return user;
+  }
+
+  async updateMe(userId: string, dto: { displayName?: string; bio?: string }) {
+    if (!userId) throw new BadRequestException("UserId is required");
+
+    const displayName =
+      dto.displayName === undefined ? undefined : dto.displayName.trim();
+    const bio = dto.bio === undefined ? undefined : dto.bio.trim();
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(displayName !== undefined ? { displayName } : {}),
+        ...(bio !== undefined ? { bio } : {}),
+      },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        displayName: true,
+        bio: true,
+        isEmailVerified: true,
+        createdAt: true,
+      },
+    });
+
     return user;
   }
 }

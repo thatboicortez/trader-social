@@ -1,9 +1,5 @@
-import './globals.css';
-
-export const metadata = {
-  title: 'Trader Social',
-  description: 'Trader Social',
-};
+import "./globals.css";
+import { NavShell } from "@/components/NavShell";
 
 export default function RootLayout({
   children,
@@ -12,7 +8,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <NavShell>{children}</NavShell>
+      </body>
     </html>
   );
 }

@@ -1,14 +1,29 @@
-import { IsEmail, IsString, MinLength, MaxLength, Matches } from "class-validator";
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  MaxLength,
+  Matches,
+} from "class-validator";
 
 export class RegisterDto {
   @IsEmail()
   email!: string;
 
+  // handle (уникальный, потом не меняется)
   @IsString()
   @MinLength(3)
   @MaxLength(20)
-  @Matches(/^[a-zA-Z0-9_]+$/, { message: "username must be alphanumeric/underscore" })
+  @Matches(/^[a-zA-Z0-9_]+$/, {
+    message: "username must be alphanumeric/underscore",
+  })
   username!: string;
+
+  // Name (НЕ уникальное)
+  @IsString()
+  @MinLength(2)
+  @MaxLength(50)
+  displayName!: string;
 
   @IsString()
   @MinLength(8)

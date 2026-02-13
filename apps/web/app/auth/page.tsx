@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./auth.module.css";
+
 import { CreateAccountModal } from "./components/CreateAccountModal";
 import { VerifyCodeModal } from "./components/VerifyCodeModal";
+
 import { apiFetch } from "@/lib/api";
 import { setToken } from "@/lib/auth";
 
@@ -17,10 +19,17 @@ export default function AuthPage() {
   const [verifyOpen, setVerifyOpen] = useState(false);
 
   // только email, телефон пока отключаем
-  const [method, setMethod] = useState<SignupMethod>("email");
+  const [method] = useState<SignupMethod>("email");
 
-  const [signupName, setSignupName] = useState("");
-  const [signupValue, setSignupValue] = useState(""); // email
+  // Name (не уникальный)
+  const [displayName, setDisplayName] = useState("");
+
+  // Username/handle (уникальный, потом нельзя менять)
+  const [username, setUsername] = useState("");
+
+  // email
+  const [email, setEmail] = useState("");
+
   const [password, setPassword] = useState("");
 
   const [err, setErr] = useState<string | null>(null);
@@ -40,19 +49,26 @@ export default function AuthPage() {
   async function onNextFromCreate() {
     setErr(null);
 
-    const username = signupName.trim();
-    const email = signupValue.trim().toLowerCase();
+    const dn = displayName.trim();
+    const un = username.trim().toLowerCase().replace(/^@+/, "");
+    const em = email.trim().toLowerCase();
+    const pw = password.trim();
 
-    if (!username) return setErr("Name is required");
-    if (!email) return setErr("Email is required");
-    if (!password.trim()) return setErr("Password is required");
+    if (!dn) return setErr("Name is required");
+    if (!un) return setErr("Username is required");
+    if (!em) return setErr("Email is required");
+    if (!pw) return setErr("Password is required");
 
     setLoading(true);
     try {
-      // register -> создаёт юзера + генерит код (и должен отправить email, когда EmailService включишь)
       await apiFetch<{ ok: boolean; userId: string }>(`/auth/register`, {
         method: "POST",
-        body: JSON.stringify({ email, username, password }),
+        body: JSON.stringify({
+          email: em,
+          username: un,
+          displayName: dn,
+          password: pw,
+        }),
       });
 
       setCreateOpen(false);
@@ -68,17 +84,16 @@ export default function AuthPage() {
     setErr(null);
     setLoading(true);
     try {
-      const email = signupValue.trim().toLowerCase();
+      const em = email.trim().toLowerCase();
 
       await apiFetch<{ ok: boolean }>(`/auth/verify`, {
         method: "POST",
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({ email: em, code }),
       });
 
-      // после verify — логинимся и кидаем в /feed
       const loginRes = await apiFetch<{ accessToken: string }>(`/auth/login`, {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: em, password }),
       });
 
       setToken(loginRes.accessToken);
@@ -147,23 +162,27 @@ export default function AuthPage() {
         </section>
       </div>
 
-{createOpen && (
-  <CreateAccountModal
-    name={signupName}
-    email={signupValue}
-    password={password}
-    onChangeName={setSignupName}
-    onChangeEmail={setSignupValue}
-    onChangePassword={setPassword}
-    onClose={onCloseAll}
-    onNext={onNextFromCreate}
-  />
-)}
+      {createOpen && (
+        <CreateAccountModal
+          displayName={displayName}
+          username={username}
+          email={email}
+          password={password}
+          loading={loading}
+          error={err}
+          onChangeDisplayName={setDisplayName}
+          onChangeUsername={setUsername}
+          onChangeEmail={setEmail}
+          onChangePassword={setPassword}
+          onClose={onCloseAll}
+          onNext={onNextFromCreate}
+        />
+      )}
 
       {verifyOpen && (
         <VerifyCodeModal
           method={method}
-          value={signupValue}
+          value={email}
           loading={loading}
           error={err}
           onBack={() => {

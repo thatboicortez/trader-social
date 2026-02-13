@@ -4,38 +4,61 @@ import { useMemo } from "react";
 import styles from "./modal.module.css";
 
 export function CreateAccountModal(props: {
-  name: string; // displayName (можно же и username)
+  displayName: string; // Name (не уникальное)
+  username: string; // @handle (уникальный, потом нельзя менять)
   email: string;
   password: string;
 
-  onChangeName: (v: string) => void;
+  loading?: boolean;
+  error?: string | null;
+
+  onChangeDisplayName: (v: string) => void;
+  onChangeUsername: (v: string) => void;
   onChangeEmail: (v: string) => void;
   onChangePassword: (v: string) => void;
 
   onClose: () => void;
-  onNext: () => void; // дальше: отправка /auth/register и открытие VerifyCodeModal
+  onNext: () => void; // дальше: /auth/register и открытие VerifyCodeModal
 }) {
   const {
-    name,
+    displayName,
+    username,
     email,
     password,
-    onChangeName,
+    loading,
+    error,
+    onChangeDisplayName,
+    onChangeUsername,
     onChangeEmail,
     onChangePassword,
     onClose,
     onNext,
   } = props;
 
+  const cleanUsername = useMemo(() => {
+    // приводим к handle: lower, без пробелов, без @, только [a-z0-9_]
+    let v = (username || "").trim().toLowerCase();
+    v = v.replace(/^@+/, "");
+    v = v.replace(/\s+/g, "");
+    v = v.replace(/[^a-z0-9_]/g, "");
+    return v;
+  }, [username]);
+
   const canNext = useMemo(() => {
-    const n = name.trim();
-    const e = email.trim();
-    const p = password.trim();
-    // минимальные проверки (чтобы кнопка не была всегда активна)
+    const n = (displayName || "").trim();
+    const u = cleanUsername;
+    const e = (email || "").trim().toLowerCase();
+    const p = (password || "").trim();
+
+    if (loading) return false;
+
     if (n.length < 2) return false;
+    if (u.length < 3) return false; // минимально
     if (!e.includes("@") || e.length < 5) return false;
     if (p.length < 6) return false;
+
     return true;
-  }, [name, email, password]);
+  }, [displayName, cleanUsername, email, password, loading]);
 
   return (
     <div
@@ -51,6 +74,7 @@ export function CreateAccountModal(props: {
             type="button"
             onClick={onClose}
             aria-label="Close"
+            disabled={!!loading}
           >
             ✕
           </button>
@@ -67,11 +91,33 @@ export function CreateAccountModal(props: {
             </div>
             <input
               className={styles.input}
-              value={name}
-              onChange={(e) => onChangeName(e.target.value)}
+              value={displayName}
+              onChange={(e) => onChangeDisplayName(e.target.value)}
               placeholder="Name"
               autoFocus
+              disabled={!!loading}
             />
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.labelRow}>
+              <span className={styles.label}>Username</span>
+              <span style={{ opacity: 0.65, fontSize: 12 }}>
+                (can’t be changed later)
+              </span>
+            </div>
+            <input
+              className={styles.input}
+              value={username}
+              onChange={(e) => onChangeUsername(e.target.value)}
+              placeholder="handle"
+              autoCapitalize="none"
+              autoCorrect="off"
+              disabled={!!loading}
+            />
+            <div style={{ marginTop: 6, opacity: 0.75, fontSize: 12 }}>
+              Your handle: <b>@{cleanUsername || "..."}</b>
+            </div>
           </div>
 
           <div className={styles.field}>
@@ -86,6 +132,7 @@ export function CreateAccountModal(props: {
               inputMode="email"
               autoCapitalize="none"
               autoCorrect="off"
+              disabled={!!loading}
             />
           </div>
 
@@ -99,12 +146,17 @@ export function CreateAccountModal(props: {
               onChange={(e) => onChangePassword(e.target.value)}
               placeholder="Minimum 6 characters"
               type="password"
+              disabled={!!loading}
             />
           </div>
 
           <p className={styles.helper}>
             Сейчас делаем только email-flow. Телефон убрали.
           </p>
+
+          {error ? (
+            <p style={{ color: "crimson", margin: "8px 0 0" }}>{error}</p>
+          ) : null}
         </div>
 
         <div className={styles.footer}>
@@ -114,7 +166,7 @@ export function CreateAccountModal(props: {
             disabled={!canNext}
             onClick={onNext}
           >
-            Next
+            {loading ? "Loading..." : "Next"}
           </button>
         </div>
       </div>

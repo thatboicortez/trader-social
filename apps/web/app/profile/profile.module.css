@@ -1,0 +1,269 @@
+.page {
+  min-height: 100vh;
+  background: #000;
+  color: #fff;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 620px) 1fr;
+  gap: 28px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 18px 16px 40px;
+}
+
+.sidebar {
+  position: sticky;
+  top: 16px;
+  align-self: start;
+  height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 6px 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.brandMark {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.nav {
+  display: grid;
+  gap: 6px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  color: rgba(255,255,255,0.92);
+  text-decoration: none;
+  border: 1px solid transparent;
+  font-weight: 700;
+}
+
+.navItem:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.navItemActive {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.10);
+}
+
+.navIcon {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  opacity: 0.95;
+}
+
+.createChannelBtn {
+  margin-top: 8px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: #fff;
+  color: #0f1419;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.createChannelBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sidebarFooter {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+}
+
+.miniAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+}
+
+.miniUser {
+  min-width: 0;
+}
+.miniName {
+  font-weight: 800;
+  line-height: 1.1;
+}
+.miniHandle {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.center {
+  min-width: 0;
+  border-left: 1px solid rgba(255,255,255,0.10);
+  border-right: 1px solid rgba(255,255,255,0.10);
+}
+
+.topBar {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  position: sticky;
+  top: 0;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(10px);
+  z-index: 5;
+}
+
+.backBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  cursor: pointer;
+}
+
+.title {
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.profileCard {
+  padding-bottom: 10px;
+}
+
+.banner {
+  height: 180px;
+  background: rgba(255,255,255,0.10);
+}
+
+.avatarRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  margin-top: -46px;
+}
+
+.avatar {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 4px solid #000;
+  background: rgba(255,255,255,0.08);
+}
+
+.editBtn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.28);
+  background: transparent;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.editBtn:hover {
+  border-color: rgba(255,255,255,0.45);
+}
+
+.meta {
+  padding: 10px 14px 0;
+  display: grid;
+  gap: 6px;
+}
+
+.name {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.handle {
+  opacity: 0.78;
+  font-weight: 700;
+}
+
+.bio {
+  margin-top: 6px;
+  opacity: 0.92;
+  line-height: 1.35;
+}
+
+.joined {
+  margin-top: 6px;
+  font-size: 13px;
+  opacity: 0.75;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.divider {
+  margin-top: 14px;
+  height: 1px;
+  background: rgba(255,255,255,0.10);
+}
+
+.actionsRow {
+  padding: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+.logoutBtn {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.right {
+  min-width: 0;
+}
+
+@media (max-width: 980px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; }
+  .center { border-left: none; border-right: none; }
+  .right { display: none; }
+}
